@@ -30,11 +30,24 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+const DAYS_OF_WEEK = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+];
+
+type ScheduleState = Record<string, { enabled: boolean; start: string; end: string }>;
+
 export default function RegisterPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  const [schedule, setSchedule] = useState<ScheduleState>(
+    DAYS_OF_WEEK.reduce((acc, day) => ({
+      ...acc,
+      [day]: { enabled: false, start: '09:00', end: '17:00' }
+    }), {})
+  );
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -44,6 +57,20 @@ export default function RegisterPage() {
   });
   
   const selectedRole = watch('role');
+
+  const toggleDay = (day: string) => {
+    setSchedule(prev => ({
+      ...prev,
+      [day]: { ...prev[day], enabled: !prev[day].enabled }
+    }));
+  };
+
+  const updateTime = (day: string, field: 'start' | 'end', value: string) => {
+    setSchedule(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value }
+    }));
+  };
 
   const onSubmit = async (data: RegisterFormValues) => {
     setLoading(true);
@@ -64,7 +91,19 @@ export default function RegisterPage() {
         payload.yearsExperience = data.yearsExperience ? parseInt(data.yearsExperience) : undefined;
         payload.consultationFee = data.consultationFee;
         payload.profileDescription = data.profileDescription;
-        payload.availabilitySchedule = data.availabilitySchedule ? JSON.parse(data.availabilitySchedule) : undefined;
+        
+        // Transform schedule state into the desired JSON format
+        const formattedSchedule: Record<string, string[]> = {};
+        Object.entries(schedule).forEach(([day, val]) => {
+          if (val.enabled) {
+            formattedSchedule[day] = [val.start, val.end];
+          }
+        });
+        
+        payload.availabilitySchedule = Object.keys(formattedSchedule).length > 0 
+          ? formattedSchedule 
+          : undefined;
+          
       } else if (data.role === 'pharmacy') {
         payload.pharmacyName = data.pharmacyName;
         payload.location = data.location;
@@ -77,12 +116,7 @@ export default function RegisterPage() {
       login(user, token);
       router.push(`/${user.role}/dashboard`);
     } catch (err: any) {
-      // If the schedule is invalid JSON, fail gracefully
-      if (err instanceof SyntaxError && data.role === 'provider') {
-        setError('Availability Schedule must be valid JSON');
-      } else {
-        setError(err.response?.data?.message || 'Registration failed');
-      }
+      setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -182,14 +216,39 @@ export default function RegisterPage() {
                    className="w-full px-3 py-2 mt-1 border rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
                  />
                </div>
-               <div>
-                 <label className="block text-xs font-medium text-gray-700">Availability Schedule (JSON Format)</label>
-                 <textarea
-                   rows={2}
-                   placeholder='e.g. { "Monday": ["09:00", "17:00"] }'
-                   {...register('availabilitySchedule')}
-                   className="w-full px-3 py-2 mt-1 border rounded shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
-                 />
+               
+               <div className="space-y-2">
+                 <label className="block text-xs font-medium text-gray-700">Availability Schedule</label>
+                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1 text-xs">
+                   {DAYS_OF_WEEK.map(day => (
+                     <div key={day} className="flex items-center space-x-2 bg-white p-2 rounded border border-blue-100 shadow-sm">
+                       <input 
+                         type="checkbox" 
+                         checked={schedule[day].enabled} 
+                         onChange={() => toggleDay(day)}
+                         className="rounded text-blue-600 focus:ring-blue-500 h-4 w-4"
+                       />
+                       <span className="font-medium w-20 text-gray-700">{day}</span>
+                       {schedule[day].enabled && (
+                         <div className="flex items-center space-x-1 flex-1">
+                           <input 
+                             type="time" 
+                             value={schedule[day].start}
+                             onChange={(e) => updateTime(day, 'start', e.target.value)}
+                             className="p-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-24"
+                           />
+                           <span className="text-gray-400">-</span>
+                           <input 
+                             type="time" 
+                             value={schedule[day].end}
+                             onChange={(e) => updateTime(day, 'end', e.target.value)}
+                             className="p-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-24"
+                           />
+                         </div>
+                       )}
+                     </div>
+                   ))}
+                 </div>
                </div>
             </div>
           )}

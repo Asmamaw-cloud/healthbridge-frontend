@@ -17,7 +17,6 @@ export default function ProviderDirectory() {
       const params = new URLSearchParams();
       if (searchTerm) params.append('q', searchTerm);
       if (specialization) params.append('specialization', specialization);
-      params.append('available', 'true');
       
       const res = await api.get(`/providers?${params.toString()}`);
       return res.data;

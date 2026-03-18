@@ -6,8 +6,9 @@ import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Message, User } from '@/types';
-import { Search, Send, Image as ImageIcon, MessageSquare } from 'lucide-react';
+import { Search, Send, Image as ImageIcon, MessageSquare, Video } from 'lucide-react';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function MessagesPage() {
   const { user } = useAuthStore();
@@ -162,7 +163,7 @@ export default function MessagesPage() {
       <div className="w-2/3 flex flex-col bg-gray-50">
         {selectedUserId ? (
           <>
-            <div className="p-4 border-b border-gray-200 bg-white shadow-sm z-10">
+            <div className="p-4 border-b border-gray-200 bg-white shadow-sm z-10 flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center justify-center w-10 h-10 text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
                   U
@@ -171,6 +172,13 @@ export default function MessagesPage() {
                   <h3 className="text-sm font-medium text-gray-900">Current Conversation</h3>
                 </div>
               </div>
+              <Link
+                href={`/video/chat-${[selectedUserId, user?.id].sort().join('-')}`}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Video Call
+              </Link>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-4">

@@ -119,6 +119,28 @@ export default function BookConsultation() {
             </div>
           </div>
 
+          {provider.availabilitySchedule && (
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <h3 className="text-sm font-semibold text-blue-900 mb-2">Provider's Typical Availability</h3>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {typeof provider.availabilitySchedule === 'object' && !Array.isArray(provider.availabilitySchedule) ? (
+                  Object.entries(provider.availabilitySchedule).map(([day, times]) => (
+                    <div key={day} className="text-xs">
+                      <span className="font-bold block text-blue-800">{day}</span>
+                      <span className="text-blue-600">
+                        {Array.isArray(times) ? `${times[0]} - ${times[1]}` : JSON.stringify(times)}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-xs text-blue-600">
+                    {JSON.stringify(provider.availabilitySchedule)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div>
             <label className="block mb-2 text-sm font-medium text-gray-700">Consultation Type</label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
