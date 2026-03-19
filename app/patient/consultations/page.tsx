@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { toast } from 'sonner';
 import { Calendar as CalendarIcon, Clock, Video, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Consultation } from '@/types';
 import Link from 'next/link';
 
 export default function PatientConsultations() {
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
 
   const { data: consultations = [], isLoading } = useQuery<Consultation[]>({
@@ -16,6 +18,18 @@ export default function PatientConsultations() {
     queryFn: async () => {
       const res = await api.get('/consultations');
       return res.data;
+    }
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.put(`/consultations/${id}/cancel`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('Consultation cancelled successfully');
+      queryClient.invalidateQueries({ queryKey: ['patient-consultations'] });
+      queryClient.invalidateQueries({ queryKey: ['patientDashboard'] });
     }
   });
 
@@ -89,9 +103,18 @@ export default function PatientConsultations() {
                   
                   <div className="mt-4 md:mt-0 flex flex-col md:items-end space-y-2">
                     {consultation.consultationStatus === 'pending' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                        Pending Provider Approval
-                      </span>
+                      <div className="flex flex-col space-y-2 items-end">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                          Pending Provider Approval
+                        </span>
+                        <button
+                          onClick={() => cancelMutation.mutate(consultation.id)}
+                          disabled={cancelMutation.isPending}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50"
+                        >
+                          Cancel Request
+                        </button>
+                      </div>
                     )}
                     
                     {consultation.consultationStatus === 'scheduled' && (
@@ -116,9 +139,25 @@ export default function PatientConsultations() {
 
                     {consultation.consultationStatus === 'rejected' && (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        Declined by Provider
+                        Declined
                       </span>
                     )}
+
+                    {
+                      consultation.consultationStatus === "cancelled" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          Cancelled
+                        </span>
+                      )
+                    }
+
+                    {
+                      consultation.consultationStatus === "expired" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          Expired
+                        </span>
+                      )
+                    }
                   </div>
                 </div>
               </li>

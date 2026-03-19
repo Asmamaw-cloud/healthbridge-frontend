@@ -171,13 +171,6 @@ export default function MessagesPage() {
                   <h3 className="text-sm font-medium text-gray-900">Current Conversation</h3>
                 </div>
               </div>
-              <Link
-                href={`/video/chat-${[selectedUserId, user?.id].sort().join('-')}`}
-                className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Video className="w-4 h-4 mr-2" />
-                Video Call
-              </Link>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-4">

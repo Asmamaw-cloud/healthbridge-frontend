@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Video, Phone, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 const bookingSchema = z.object({
   date: z.string().min(1, 'Please select a date'),
@@ -75,6 +76,15 @@ export default function BookConsultation() {
     );
   }
 
+  const onSubmit = (d: BookingFormValues) => {
+    const combinedDate = new Date(`${d.date}T${d.time}`);
+    if (combinedDate < new Date()) {
+      toast.error('You cannot book a consultation in the past.');
+      return;
+    }
+    bookMutation.mutate(d);
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center space-x-4">
@@ -96,7 +106,7 @@ export default function BookConsultation() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit((d) => bookMutation.mutate(d))} className="pt-6 space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="pt-6 space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">Date</label>

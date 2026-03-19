@@ -22,7 +22,7 @@ export default function ProviderSchedule() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await api.put(`/consultations/${id}/status`, { consultationStatus: status });
+      const res = await api.put(`/consultations/${id}/status`, { status });
       return res.data;
     },
     onSuccess: () => {
@@ -116,6 +116,30 @@ export default function ProviderSchedule() {
                         Completed
                       </span>
                     )}
+
+                    {
+                      consultation.consultationStatus === "cancelled" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          Cancelled
+                        </span>
+                      )
+                    }
+
+                    {
+                      consultation.consultationStatus === "rejected" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          Rejected
+                        </span>
+                      )
+                    }
+
+                    {
+                      consultation.consultationStatus === "expired" && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          Expired
+                        </span>
+                      )
+                    }
                   </div>
                 </div>
               </li>
