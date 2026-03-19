@@ -32,8 +32,7 @@ export default function MessagesPage() {
       } else {
         // If provider, extract patients from consultations
         const patientsMap = new Map();
-        res.data.todayConsultations?.forEach((c: any) => patientsMap.set(c.patientId, { id: c.patientId, user: c.patient }));
-        res.data.pendingRequests?.forEach((c: any) => patientsMap.set(c.patientId, { id: c.patientId, user: c.patient }));
+        res.data.upcomingConsultations?.forEach((c: any) => patientsMap.set(c.patientId, { id: c.patientId, user: c.patient }));
         return Array.from(patientsMap.values());
       }
     }
