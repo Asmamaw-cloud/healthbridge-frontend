@@ -47,16 +47,31 @@ export default function VideoCallRoom() {
         // Assume backend returns token and channel info, either directly or under meetingLink parsed
         const config = res.data.meetingConfig || res.data; 
         
-        if (!config.channelName) {
+        let channelName = null;
+        if (config.meetingLink && config.meetingLink.startsWith('agora:')) {
+           const parts = config.meetingLink.split(':');
+           channelName = parts[2];
+        } else if (config.channelName) {
+           channelName = config.channelName;
+        }
+
+        if (!channelName) {
            setError('Waiting for provider to start the meeting...');
            return;
         }
 
+        const finalAppId = config.appId || process.env.NEXT_PUBLIC_AGORA_APP_ID;
+        
+        if (!finalAppId) {
+           setError('Configuration Error: Missing Agora App ID. Ensure the backend .env contains AGORA_APP_ID.');
+           return;
+        }
+
         setAgoraConfig({
-          appId: config.appId || process.env.NEXT_PUBLIC_AGORA_APP_ID || '', // Fallback
-          channel: config.channelName,
+          appId: finalAppId,
+          channel: channelName,
           token: config.token || null,
-          uid: user?.id || Math.floor(Math.random() * 10000)
+          uid: Math.floor(Math.random() * 1000000)
         });
         
       } catch (err: any) {
@@ -103,7 +118,17 @@ export default function VideoCallRoom() {
       try {
         await client.join(agoraConfig.appId, agoraConfig.channel, agoraConfig.token, agoraConfig.uid);
         
-        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        // Handle physical device mismatches or permission denials safely
+        let tracks: any[] = [];
+        try {
+          tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+        } catch (deviceErr) {
+          console.warn("Could not find camera/mic devices. Attempting to proceed without them...", deviceErr);
+          if (isMounted) setError('No Camera or Microphone detected. Please connect devices and refresh.');
+          return;
+        }
+
+        const [audioTrack, videoTrack] = tracks;
         localAudioTrackRef.current = audioTrack;
         localVideoTrackRef.current = videoTrack;
         
