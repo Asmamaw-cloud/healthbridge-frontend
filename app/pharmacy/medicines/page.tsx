@@ -23,14 +23,31 @@ export default function PharmacyMedicines() {
       // or we just fetch dashboard data which has `totalMedicines` but maybe not the full list.
       // The prompt actually says "POST /pharmacy/add-medicine", "PUT /pharmacy/update-medicine"
       // Let's assume GET /pharmacy/medicines to list them.
-      const res = await api.get('/pharmacy/medicines').catch(() => ({ data: [] })); 
+      const res = await api.get('/pharmacy/medicines');
       return res.data;
     }
   });
 
-  const { register, handleSubmit, reset } = useForm();
+  const [editingMedicine, setEditingMedicine] = useState<PharmacyMedicine | null>(null);
 
-  const addMutation = useMutation({
+  const { register, handleSubmit, reset, setValue } = useForm();
+
+  const handleEdit = (medicine: PharmacyMedicine) => {
+    setEditingMedicine(medicine);
+    setIsAdding(true);
+    setValue('medicineName', medicine.medicineName);
+    setValue('genericName', medicine.genericName);
+    setValue('quantity', medicine.quantity);
+    setValue('availabilityStatus', medicine.availabilityStatus.toString());
+  };
+
+  const handleCancel = () => {
+    setIsAdding(false);
+    setEditingMedicine(null);
+    reset();
+  };
+
+  const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       const payload = {
         medicineName: data.medicineName,
@@ -38,20 +55,37 @@ export default function PharmacyMedicines() {
         quantity: parseInt(data.quantity),
         availabilityStatus: data.availabilityStatus === 'true'
       };
-      const res = await api.post('/pharmacy/add-medicine', payload);
-      return res.data;
+      
+      if (editingMedicine) {
+        const res = await api.put(`/pharmacy/medicines/${editingMedicine.id}`, payload);
+        return res.data;
+      } else {
+        const res = await api.post('/pharmacy/medicines', payload);
+        return res.data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacy-medicines'] });
       queryClient.invalidateQueries({ queryKey: ['pharmacyDashboard'] });
       setIsAdding(false);
+      setEditingMedicine(null);
       reset();
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/pharmacy/medicines/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy-medicines'] });
+      queryClient.invalidateQueries({ queryKey: ['pharmacyDashboard'] });
     }
   });
 
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string, status: boolean }) => {
-      const res = await api.put(`/pharmacy/update-medicine/${id}`, { availabilityStatus: status });
+      const res = await api.put(`/pharmacy/medicines/${id}`, { availabilityStatus: status });
       return res.data;
     },
     onSuccess: () => {
@@ -59,7 +93,10 @@ export default function PharmacyMedicines() {
     }
   });
 
-  const filteredMedicines = medicines.filter(m => m.medicineName.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredMedicines = medicines.filter(m => 
+    m.medicineName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (m.genericName && m.genericName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -81,7 +118,7 @@ export default function PharmacyMedicines() {
             />
           </div>
           <button
-            onClick={() => setIsAdding(!isAdding)}
+            onClick={() => isAdding ? handleCancel() : setIsAdding(true)}
             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             {isAdding ? 'Cancel' : <><Plus className="w-4 h-4 mr-2" /> Add Medicine</>}
@@ -92,7 +129,7 @@ export default function PharmacyMedicines() {
       {isAdding && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-blue-100">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Medicine</h2>
-          <form onSubmit={handleSubmit((d) => addMutation.mutate(d))} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <form onSubmit={handleSubmit((d) => saveMutation.mutate(d))} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Medicine Name</label>
               <input required {...register('medicineName')} className="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="e.g. Paracetamol 500mg" />
@@ -115,10 +152,10 @@ export default function PharmacyMedicines() {
             <div className="lg:col-span-4 flex justify-end mt-2">
               <button
                 type="submit"
-                disabled={addMutation.isPending}
+                disabled={saveMutation.isPending}
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded flex items-center hover:bg-blue-700"
               >
-                {addMutation.isPending ? 'Adding...' : 'Save Item'}
+                {saveMutation.isPending ? 'Saving...' : editingMedicine ? 'Update Item' : 'Save Item'}
               </button>
             </div>
           </form>
@@ -166,8 +203,23 @@ export default function PharmacyMedicines() {
                         {medicine.availabilityStatus ? 'In Stock' : 'Out of Stock'}
                       </button>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-indigo-600 hover:text-indigo-900 ml-4"><Edit2 className="w-4 h-4"/></button>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                      <button 
+                        onClick={() => handleEdit(medicine)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        <Edit2 className="w-4 h-4"/>
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this item?')) {
+                            deleteMutation.mutate(medicine.id);
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-4 h-4"/>
+                      </button>
                     </td>
                   </tr>
                 ))}

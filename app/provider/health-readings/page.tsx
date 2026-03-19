@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Search, Activity, Heart, Thermometer, Droplets, Scale } from 'lucide-react';
@@ -9,20 +9,27 @@ import { HealthReading, User } from '@/types';
 
 export default function PatientHealthReadings() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+ 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Ideally there would be an endpoint /health-readings/patients that groups by patient,
   // but let's fetch all readings (the backend filter them by provider's patients if needed)
   const { data: readings = [], isLoading, error } = useQuery<HealthReading[]>({
-    queryKey: ['provider-health-readings'],
+    queryKey: ['provider-health-readings', debouncedSearch],
     queryFn: async () => {
-      const res = await api.get('/health-readings');
+      const res = await api.get(`/health-readings?search=${debouncedSearch}`);
       return res.data;
     }
   });
 
-  const filteredReadings = readings.filter(r => 
-    r.patient?.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredReadings = readings; // Backend handles filtering now
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">

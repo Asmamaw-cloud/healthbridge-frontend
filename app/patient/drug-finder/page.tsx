@@ -89,6 +89,11 @@ export default function DrugFinder() {
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">{item.medicineName}</h3>
+                        {item.genericName && (
+                          <p className="text-xs text-gray-400 -mt-0.5 mb-1 italic">
+                            Generic: {item.genericName}
+                          </p>
+                        )}
                         <p className="mt-1 flex items-center text-sm text-gray-500">
                           <MapPin className="mr-1.5 h-4 w-4 text-gray-400" />
                           {item.pharmacy?.pharmacyName} — {item.pharmacy?.location || 'Location not specified'}

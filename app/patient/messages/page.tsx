@@ -14,27 +14,25 @@ export default function MessagesPage() {
   const { user } = useAuthStore();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch conversations/contacts based on user role
   const { data: contacts = [], isLoading: loadingContacts } = useQuery({
-    queryKey: ['contacts'],
+    queryKey: ['contacts', debouncedSearch],
     queryFn: async () => {
-      // In a real scenario, this would be a specific endpoint like /messages/contacts
-      // We'll mock it for now with /providers if patient, or /patients if provider
-      // since the prompt says "one-to-one chat between patient-provider"
-      const endpoint = user?.role === 'patient' ? '/providers' : '/dashboard'; // Using dashboard just to get some users, ideally we need a chat contacts endpoint
-      const res = await api.get(endpoint);
-      
-      if (user?.role === 'patient') {
-        return res.data; // Array of providers
-      } else {
-        // If provider, extract patients from consultations
-        const patientsMap = new Map();
-        res.data.upcomingConsultations?.forEach((c: any) => patientsMap.set(c.patientId, { id: c.patientId, user: c.patient }));
-        return Array.from(patientsMap.values());
-      }
+      const res = await api.get(`/messages/contacts?search=${debouncedSearch}`);
+      return res.data;
     }
   });
 
@@ -118,6 +116,8 @@ export default function MessagesPage() {
             <input
               type="text"
               placeholder="Search contacts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full py-2 pl-10 pr-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             />
           </div>
@@ -129,11 +129,10 @@ export default function MessagesPage() {
           ) : (
              <ul className="divide-y divide-gray-100">
               {contacts.map((contact: any) => {
-                // If patient, the contact is a Provider so UserId is contact.userId, 
-                // but the prompt API might expect contact.userId or contact.user.id
-                const contactUserId = contact.userId || contact.id;
-                const contactName = contact.user?.fullName || 'Unknown';
+                const contactUserId = contact.id;
+                const contactName = contact.fullName || 'Unknown';
                 const isSelected = selectedUserId === contactUserId;
+                const subtext = contact.role === 'provider' ? contact.specialization : 'Patient';
 
                 return (
                   <li 
@@ -147,7 +146,7 @@ export default function MessagesPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{contactName}</p>
-                        <p className="text-xs text-gray-500 truncate">{user?.role === 'patient' ? contact.specialization : 'Patient'}</p>
+                        <p className="text-xs text-gray-500 truncate">{subtext}</p>
                       </div>
                     </div>
                   </li>

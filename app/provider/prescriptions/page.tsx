@@ -38,6 +38,8 @@ export default function ProviderPrescriptions() {
     }
   });
 
+  console.log("Here are the consultations", consultations)
+
   const { register, control, handleSubmit, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
