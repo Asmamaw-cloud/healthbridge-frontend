@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-import { Calendar as CalendarIcon, Clock, Video, User } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Video, User, Pill } from 'lucide-react';
 import { format } from 'date-fns';
 import { Consultation } from '@/types';
 import Link from 'next/link';
@@ -132,9 +132,17 @@ export default function PatientConsultations() {
                     )}
 
                     {consultation.consultationStatus === 'completed' && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                        Completed
-                      </span>
+                      <div className="flex flex-col space-y-2 items-end">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                          Completed
+                        </span>
+                        <Link
+                          href="/patient/prescriptions"
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 border border-blue-200 rounded hover:bg-blue-50"
+                        >
+                          <Pill className="w-3 h-3 mr-1" /> View Prescription
+                        </Link>
+                      </div>
                     )}
 
                     {consultation.consultationStatus === 'rejected' && (

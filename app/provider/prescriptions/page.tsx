@@ -6,7 +6,6 @@ import { api } from '@/lib/api';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CustomLink } from 'lucide-react'; // placeholder
 import { FileText, Plus, Trash2 } from 'lucide-react';
 import { Consultation } from '@/types';
 import { format } from 'date-fns';
@@ -59,10 +58,9 @@ export default function ProviderPrescriptions() {
       // Assuming a single call handles both notes & prescriptions based on typical monolithic endpoint,
       // or we make two calls.
       const payload = {
-         notes: data.consultationNotes,
-         prescriptions: data.prescriptions
+         medicines: data.prescriptions
       };
-      const res = await api.post(`/consultations/${selectedConsultationId}/prescription`, payload);
+      const res = await api.post(`/prescriptions/consultation/${selectedConsultationId}`, payload);
       return res.data;
     },
     onSuccess: () => {
