@@ -106,6 +106,7 @@ export interface Notification {
   userId: string;
   type: string;
   message: string;
+  senderId?: string | null;
   isRead: boolean;
   createdAt: string;
   user?: User;

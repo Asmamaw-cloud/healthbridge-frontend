@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,6 +28,8 @@ type FormValues = z.infer<typeof formSchema>;
 export default function ProviderPrescriptions() {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
 
+  const queryClient = useQueryClient();
+
   const { data: consultations = [], isLoading } = useQuery<Consultation[]>({
     queryKey: ['provider-completed-consultations'],
     queryFn: async () => {
@@ -36,6 +38,20 @@ export default function ProviderPrescriptions() {
       return res.data.filter((c: Consultation) => c.consultationStatus === 'scheduled' || c.consultationStatus === 'completed');
     }
   });
+
+  useEffect(() => {
+    // Best-effort: keep badge state consistent if providers ever receive prescription_added notifications.
+    api
+      .put('/notifications/mark-prescription-added-read')
+      .then(() => {
+        queryClient.invalidateQueries({
+          queryKey: ['notifications-badge-counts'],
+        });
+      })
+      .catch(() => {
+        // best-effort
+      });
+  }, [queryClient]);
 
   console.log("Here are the consultations", consultations)
 
@@ -154,7 +170,7 @@ export default function ProviderPrescriptions() {
                         </button>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="md:col-span-2">
-                            <label className="block flex text-xs font-medium text-gray-700 mb-1">Medication Name</label>
+                            <label className="flex text-xs font-medium text-gray-700 mb-1">Medication Name</label>
                             <input
                               {...register(`prescriptions.${index}.medicineName` as const)}
                               className="block w-full py-1.5 px-3 border border-gray-300 rounded shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"

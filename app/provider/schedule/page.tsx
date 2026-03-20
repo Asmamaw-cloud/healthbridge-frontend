@@ -76,7 +76,7 @@ export default function ProviderSchedule() {
                       <h3 className="text-lg font-medium text-gray-900">{consultation.patient?.fullName}</h3>
                       <div className="mt-1 flex items-center space-x-4 text-sm text-gray-500">
                         <span className="flex items-center"><CalendarIcon className="w-4 h-4 mr-1"/> {format(new Date(consultation.consultationDate), 'MMM d, yyyy')}</span>
-                        <span className="flex items-center"><Clock className="w-4 h-4 mr-1"/> {consultation.consultationTime}</span>
+                        <span className="flex items-center"><Clock className="w-4 h-4 mr-1"/> {format(new Date(consultation.consultationTime), 'hh:mm a')}</span>
                       </div>
                       {consultation.consultationNotes && (
                         <p className="mt-2 text-sm text-gray-600 italic">Notes: "{consultation.consultationNotes}"</p>

@@ -19,6 +19,8 @@ export default function ProviderDashboard() {
   if (isLoading) return <div className="p-8 text-center text-gray-500">Loading dashboard...</div>;
   if (error) return <div className="p-8 text-center text-red-500">Failed to load dashboard data.</div>;
 
+
+  console.log('data: ', data);
   const todayConsultations: Consultation[] = data?.todayConsultations || [];
   const pendingRequests: Consultation[] = data?.pendingRequests || [];
 
@@ -35,7 +37,7 @@ export default function ProviderDashboard() {
               <Clock className="w-6 h-6 text-indigo-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Today's Appointments</p>
+              <p className="text-sm font-medium text-gray-500">Today&apos;s Appointments</p>
               <p className="text-2xl font-semibold text-gray-900">{todayConsultations.length}</p>
             </div>
           </div>
@@ -57,7 +59,7 @@ export default function ProviderDashboard() {
         {/* Today's Schedule */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Today's Schedule</h3>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Today&apos;s Schedule</h3>
             <Link href="/provider/schedule" className="text-sm text-blue-600 hover:text-blue-500">View all</Link>
           </div>
           <ul className="divide-y divide-gray-200">
@@ -107,7 +109,7 @@ export default function ProviderDashboard() {
                         {request.patient?.fullName || 'Unknown'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {format(new Date(request.consultationDate), 'MMM d, yyyy')} at {request.consultationTime}
+                        {format(new Date(request.consultationDate), 'MMM d, yyyy')} at {format(new Date(request.consultationTime), 'hh:mm a')}
                       </p>
                     </div>
                     <div className="flex space-x-2">

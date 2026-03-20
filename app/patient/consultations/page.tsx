@@ -95,7 +95,7 @@ export default function PatientConsultations() {
                         </span>
                         <span className="flex items-center">
                           <Clock className="w-4 h-4 mr-1"/> 
-                          {consultation.consultationTime}
+                          {format(new Date(consultation.consultationTime), 'hh:mm a')}
                         </span>
                       </div>
                     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { socketService } from '@/lib/socket';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -9,9 +9,11 @@ import { uploadFiles } from '@/lib/uploadthing';
 import { Message } from '@/types';
 import { Search, Send, Image as ImageIcon, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
+import { useSearchParams } from 'next/navigation';
 
 export default function MessagesPage() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [attachmentUrl, setAttachmentUrl] = useState<string | null>(null);
@@ -48,6 +50,56 @@ export default function MessagesPage() {
       if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
     };
   }, [localPreviewUrl]);
+
+  const searchParams = useSearchParams();
+  const withUserId = searchParams.get('with');
+
+  const {
+    data: unreadMessageSenders,
+    isLoading: loadingUnreadSenders,
+  } = useQuery<{ senderIds: string[] }>({
+    queryKey: ['unread-message-senders'],
+    queryFn: async () => {
+      const res = await api.get('/notifications/unread-message-senders');
+      return res.data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const [unreadSenderIdsSet, setUnreadSenderIdsSet] = useState<Set<string>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    if (!unreadMessageSenders?.senderIds) return;
+    setUnreadSenderIdsSet(new Set(unreadMessageSenders.senderIds));
+  }, [unreadMessageSenders, loadingUnreadSenders]);
+
+  // If redirected from a notification (mobile dropdown), auto-select conversation.
+  useEffect(() => {
+    if (!withUserId) return;
+    setSelectedUserId(withUserId);
+  }, [withUserId]);
+
+  // Clear unread badge for this sender when the conversation is opened.
+  useEffect(() => {
+    if (!selectedUserId) return;
+    if (!unreadSenderIdsSet.has(selectedUserId)) return;
+
+    api
+      .put(`/notifications/mark-messages-read?senderId=${selectedUserId}`)
+      .then(() => {
+        setUnreadSenderIdsSet((prev) => {
+          const next = new Set(prev);
+          next.delete(selectedUserId);
+          return next;
+        });
+        queryClient.invalidateQueries({ queryKey: ['notifications-badge-counts'] });
+      })
+      .catch(() => {
+        // best-effort
+      });
+  }, [selectedUserId, unreadSenderIdsSet, queryClient]);
 
   // Debounce search term
   useEffect(() => {
@@ -350,6 +402,11 @@ export default function MessagesPage() {
                         <p className="text-sm font-medium text-gray-900 truncate">{contactName}</p>
                         <p className="text-xs text-gray-500 truncate">{subtext}</p>
                       </div>
+                      {unreadSenderIdsSet.has(contactUserId) && (
+                        <span className="ml-auto inline-flex items-center justify-center min-w-[1rem] h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                          1
+                        </span>
+                      )}
                     </div>
                   </li>
                 );
@@ -363,7 +420,7 @@ export default function MessagesPage() {
       <div className="w-2/3 flex flex-col bg-gray-50">
         {selectedUserId ? (
           <>
-            <div className="p-4 border-b border-gray-200 bg-white shadow-sm z-10 flex justify-between items-center">
+            <div className="p-4 border-b border-gray-200 bg-white shadow-sm z-0 flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 <div className="flex items-center justify-center w-10 h-10 text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
                   U

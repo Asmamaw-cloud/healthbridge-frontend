@@ -79,7 +79,7 @@ export default function PatientDashboard() {
                       </p>
                       <p className="flex items-center mt-2 text-sm text-gray-500">
                         <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                        {format(new Date(consultation.consultationDate), 'MMM d, yyyy')} at {consultation.consultationTime}
+                        {format(new Date(consultation.consultationDate), 'MMM d, yyyy')} at {format(new Date(consultation.consultationTime), 'hh:mm a')}
                       </p>
                     </div>
                     <div>
