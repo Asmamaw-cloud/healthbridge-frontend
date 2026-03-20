@@ -23,6 +23,7 @@ export default function VideoCallRoom() {
 
   const localVideoRef = useRef<HTMLDivElement>(null);
   const [remoteUsers, setRemoteUsers] = useState<any[]>([]);
+  const [participantName, setParticipantName] = useState<string>('Participant');
 
   // Since we use Agora SDK dynamically in client components, we store the refs
   const rtcClientRef = useRef<any>(null);
@@ -67,6 +68,13 @@ export default function VideoCallRoom() {
            return;
         }
 
+        // Store participant name
+        if (user?.role === 'patient') {
+          setParticipantName(config.provider?.user?.fullName || 'Provider');
+        } else {
+          setParticipantName(config.patient?.fullName || 'Patient');
+        }
+
         setAgoraConfig({
           appId: finalAppId,
           channel: channelName,
@@ -98,16 +106,29 @@ export default function VideoCallRoom() {
         await client.subscribe(user, mediaType);
         
         if (mediaType === 'video') {
-           setRemoteUsers(prev => [...prev.filter(u => u.uid !== user.uid), user]);
+           setRemoteUsers(prev => {
+             const existing = prev.find(u => u.uid === user.uid);
+             if (existing) {
+               return prev.map(u => u.uid === user.uid ? { ...u, videoTrack: user.videoTrack, hasVideo: true } : u);
+             }
+             return [...prev, { ...user, hasVideo: true }];
+           });
         }
         if (mediaType === 'audio') {
            user.audioTrack?.play();
+           setRemoteUsers(prev => {
+             const existing = prev.find(u => u.uid === user.uid);
+             if (existing) {
+               return prev.map(u => u.uid === user.uid ? { ...u, audioTrack: user.audioTrack } : u);
+             }
+             return [...prev, { ...user, hasVideo: false }];
+           });
         }
       });
 
       client.on('user-unpublished', (user, mediaType) => {
         if (mediaType === 'video') {
-           setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
+           setRemoteUsers(prev => prev.map(u => u.uid === user.uid ? { ...u, hasVideo: false } : u));
         }
       });
       
@@ -249,14 +270,21 @@ export default function VideoCallRoom() {
                <div className="w-16 h-16 rounded-full bg-gray-700 mx-auto flex items-center justify-center mb-4">
                   <div className="w-3 h-3 bg-gray-500 rounded-full animate-ping"></div>
                </div>
-               <p className="text-gray-400">Waiting for others to join...</p>
+               <p className="text-gray-400">Waiting for other to join...</p>
              </div>
           </div>
         ) : (
           remoteUsers.map(r => (
             <div key={r.uid} id={`remote-video-${r.uid}`} className="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
+              {!r.hasVideo && (
+                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
+                    <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold">
+                       {participantName.charAt(0)}
+                    </div>
+                 </div>
+              )}
               <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-sm z-20">
-                Participant {r.uid}
+                {participantName}
               </div>
             </div>
           ))
