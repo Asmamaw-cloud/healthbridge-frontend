@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
-import { UserRole } from '@/types';
+import { UploadButton } from '@/lib/uploadthing';
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -21,11 +21,23 @@ const registerSchema = z.object({
   consultationFee: z.string().optional(),
   profileDescription: z.string().optional(),
   availabilitySchedule: z.string().optional(),
+  licenseUrl: z.string().url().optional(),
   
   // Pharmacy fields
   pharmacyName: z.string().optional(),
   location: z.string().optional(),
   contactInfo: z.string().optional(),
+}).superRefine((data, ctx) => {
+  const needsLicense = data.role === 'provider' || data.role === 'pharmacy';
+  if (!needsLicense) return;
+
+  if (!data.licenseUrl || data.licenseUrl.trim().length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['licenseUrl'],
+      message: 'License is required',
+    });
+  }
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -49,7 +61,7 @@ export default function RegisterPage() {
     }), {})
   );
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<RegisterFormValues>({
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: 'patient'
@@ -57,6 +69,7 @@ export default function RegisterPage() {
   });
   
   const selectedRole = watch('role');
+  const licenseUrlValue = watch('licenseUrl');
 
   const toggleDay = (day: string) => {
     setSchedule(prev => ({
@@ -103,11 +116,14 @@ export default function RegisterPage() {
         payload.availabilitySchedule = Object.keys(formattedSchedule).length > 0 
           ? formattedSchedule 
           : undefined;
+        
+        payload.licenseUrl = data.licenseUrl;
           
       } else if (data.role === 'pharmacy') {
         payload.pharmacyName = data.pharmacyName;
         payload.location = data.location;
         payload.contactInfo = data.contactInfo;
+        payload.licenseUrl = data.licenseUrl;
       }
       
       const response = await api.post('/auth/register', payload);
@@ -250,6 +266,43 @@ export default function RegisterPage() {
                    ))}
                  </div>
                </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Upload License</label>
+                <div className="mt-2">
+                  <UploadButton
+                    endpoint="licenseUploader"
+                    onClientUploadComplete={(res) => {
+                      const uploaded = res?.[0];
+                      const url = uploaded?.ufsUrl ?? uploaded?.url;
+                      if (url) {
+                        setValue('licenseUrl', url, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    }}
+                    onUploadError={(uploadErr: Error) => {
+                      setError(uploadErr.message);
+                    }}
+                  />
+                </div>
+
+                {licenseUrlValue && (
+                  <a
+                    href={licenseUrlValue}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    View uploaded license
+                  </a>
+                )}
+
+                {errors.licenseUrl && (
+                  <p className="mt-1 text-xs text-red-500">{errors.licenseUrl.message}</p>
+                )}
+              </div>
             </div>
           )}
           
@@ -283,6 +336,43 @@ export default function RegisterPage() {
                    className="w-full px-3 py-2 mt-1 border rounded shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 text-sm"
                  />
                </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Upload License</label>
+                <div className="mt-2">
+                  <UploadButton
+                    endpoint="licenseUploader"
+                    onClientUploadComplete={(res) => {
+                      const uploaded = res?.[0];
+                      const url = uploaded?.ufsUrl ?? uploaded?.url;
+                      if (url) {
+                        setValue('licenseUrl', url, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    }}
+                    onUploadError={(uploadErr: Error) => {
+                      setError(uploadErr.message);
+                    }}
+                  />
+                </div>
+
+                {licenseUrlValue && (
+                  <a
+                    href={licenseUrlValue}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    View uploaded license
+                  </a>
+                )}
+
+                {errors.licenseUrl && (
+                  <p className="mt-1 text-xs text-red-500">{errors.licenseUrl.message}</p>
+                )}
+              </div>
             </div>
           )}
           

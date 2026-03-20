@@ -20,6 +20,7 @@ export interface Provider {
   consultationFee?: number | null;
   profileDescription?: string | null;
   availabilitySchedule?: any | null;
+  licenseUrl?: string | null;
   verificationStatus: VerificationStatus;
   createdAt: string;
   updatedAt: string;
@@ -32,6 +33,7 @@ export interface Pharmacy {
   pharmacyName: string;
   location?: string | null;
   contactInfo?: string | null;
+  licenseUrl?: string | null;
   verificationStatus: VerificationStatus;
   createdAt: string;
   updatedAt: string;

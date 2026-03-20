@@ -34,10 +34,12 @@ export default function PatientPrescriptions() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medication</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage & Frequency</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dosage</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prescribed By</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Prescription</th>
+                  {/* <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th> */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -54,7 +56,12 @@ export default function PatientPrescriptions() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">{p.dosage || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{p.frequency || ''} {p.duration ? `• ${p.duration}` : ''}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-gray-500">{p.frequency || ''}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-xs text-gray-500">{p.duration || ''}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm text-gray-900">
@@ -65,15 +72,15 @@ export default function PatientPrescriptions() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {format(new Date(p.consultation?.consultationDate), 'MMM d, yyyy')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button className="text-blue-600 hover:text-blue-900 flex items-center justify-end ml-auto">
                           <Download className="w-4 h-4 mr-1" /> PDF
                         </button>
-                      </td>
+                      </td> */}
                     </tr>
                     {p.instructions && (
                       <tr>
-                        <td colSpan={5} className="px-6 pb-4 pt-0">
+                        <td colSpan={6} className="px-6 pb-4 pt-0">
                            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100 italic">
                              <strong>Instructions:</strong> {p.instructions}
                            </div>

@@ -65,7 +65,8 @@ export default function AdminPharmacies() {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pharmacy Details</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location & Contact</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">License</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -73,7 +74,7 @@ export default function AdminPharmacies() {
                   <tr key={pharmacy.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold">
+                        <div className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-green-100 text-green-700 font-bold">
                           {pharmacy.pharmacyName.charAt(0) || 'P'}
                         </div>
                         <div className="ml-4">
@@ -94,9 +95,23 @@ export default function AdminPharmacies() {
                         {pharmacy.verificationStatus.toUpperCase()}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                      {pharmacy.licenseUrl ? (
+                        <a
+                          href={pharmacy.licenseUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:text-blue-800 underline text-xs"
+                        >
+                          View License
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
                       {pharmacy.verificationStatus === 'pending' && (
-                        <div className="flex justify-end space-x-2">
+                        <div className="flex justify-start space-x-2">
                           <button
                             onClick={() => updateStatusMutation.mutate({ id: pharmacy.id, status: 'approved' })}
                             disabled={updateStatusMutation.isPending}
