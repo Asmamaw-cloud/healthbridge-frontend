@@ -95,7 +95,7 @@ export interface Message {
   senderId: string;
   receiverId: string;
   messageText?: string | null;
-  imageUrl?: string | null;
+  fileUrl?: string | null;
   timestamp: string;
   sender?: User;
   receiver?: User;

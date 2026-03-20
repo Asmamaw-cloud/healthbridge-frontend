@@ -6,8 +6,8 @@ const f = createUploadthing();
 // Endpoint slug(s) must match what you use in the client UploadButton.
 export const ourFileRouter = {
   licenseUploader: f({
-    image: { maxFileSize: "10MB", maxFileCount: 1 },
-    pdf: { maxFileSize: "10MB", maxFileCount: 1 },
+    // Allow any file type for both license uploads and chat attachments.
+    blob: { maxFileSize: "16MB", maxFileCount: 1 },
   }).onUploadComplete(() => {
     // Client-side callbacks receive upload URLs regardless of serverdata.
     return {};
