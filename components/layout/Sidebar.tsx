@@ -5,6 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import {
+  isMessagesPath,
+  isNotificationsPath,
+  isPrescriptionsPath,
+} from '@/lib/pathname';
 import { 
   Home, 
   Users, 
@@ -72,14 +77,19 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       return res.data;
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 
   const messageBadge = badgeCounts?.messageCount ?? 0;
-  const isMessagesRoute = pathname.endsWith('/messages');
-  const notificationsBadge =
-    (badgeCounts?.consultationUpdatesCount ?? 0) +
-    (badgeCounts?.remindersCount ?? 0) +
-    (badgeCounts?.healthAlertsCount ?? 0);
+  const isMessagesRoute = isMessagesPath(pathname);
+  const isNotificationsRoute = isNotificationsPath(pathname);
+  const isPrescriptionsRoute = isPrescriptionsPath(pathname);
+
+  const consultationUpdatesBadge = badgeCounts?.consultationUpdatesCount ?? 0;
+  const remindersBadge = badgeCounts?.remindersCount ?? 0;
+  const healthAlertsBadge = badgeCounts?.healthAlertsCount ?? 0;
 
   const prescriptionsBadge = badgeCounts?.prescriptionCount ?? 0;
 
@@ -116,19 +126,43 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 {item.href.endsWith('/messages') &&
                   messageBadge > 0 &&
                   !isMessagesRoute && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                    <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
                       {messageBadge}
                     </span>
                   )}
                 {item.href.endsWith('/notifications') &&
-                    notificationsBadge > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
-                        {notificationsBadge}
-                      </span>
-                    )}
+                  !isNotificationsRoute && (
+                    <div className="ml-auto flex shrink-0 items-center gap-1">
+                      {consultationUpdatesBadge > 0 && (
+                        <span
+                          title="Consultation updates"
+                          className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-semibold"
+                        >
+                          {consultationUpdatesBadge}
+                        </span>
+                      )}
+                      {remindersBadge > 0 && (
+                        <span
+                          title="Reminders"
+                          className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-amber-600 text-white text-[10px] font-semibold"
+                        >
+                          {remindersBadge}
+                        </span>
+                      )}
+                      {user.role === 'patient' && healthAlertsBadge > 0 && (
+                        <span
+                          title="Health alerts"
+                          className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-rose-600 text-white text-[10px] font-semibold"
+                        >
+                          {healthAlertsBadge}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 {item.href.endsWith('/prescriptions') &&
-                    prescriptionsBadge > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                    prescriptionsBadge > 0 &&
+                    !isPrescriptionsRoute && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
                         {prescriptionsBadge}
                       </span>
                     )}

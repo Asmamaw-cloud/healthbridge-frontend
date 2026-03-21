@@ -9,13 +9,13 @@ import { useQuery } from '@tanstack/react-query';
 import { socketService } from '@/lib/socket';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { isMessagesPath, isPrescriptionsPath } from '@/lib/pathname';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
   const { data: badgeCounts } = useQuery<{
@@ -31,23 +31,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return res.data;
     },
     enabled: !!user,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always',
   });
 
-  const isMessagesRoute = pathname.endsWith('/messages');
+  const isMessagesRoute = isMessagesPath(pathname);
+  const isPrescriptionsRoute = isPrescriptionsPath(pathname);
   const mobileMessageBadgeCount = isMessagesRoute
     ? 0
     : badgeCounts?.messageCount ?? 0;
 
+  const mobilePrescriptionBadgeCount = isPrescriptionsRoute
+    ? 0
+    : badgeCounts?.prescriptionCount ?? 0;
+
   const mobileBellBadgeTotal =
     mobileMessageBadgeCount +
     (badgeCounts?.consultationUpdatesCount ?? 0) +
-    (badgeCounts?.prescriptionCount ?? 0) +
+    mobilePrescriptionBadgeCount +
     (badgeCounts?.remindersCount ?? 0) +
     (badgeCounts?.healthAlertsCount ?? 0);
 
   const mobileBellTitle = badgeCounts
     ? `Messages: ${mobileMessageBadgeCount}, Consultation updates: ${
-        badgeCounts.consultationUpdatesCount + badgeCounts.prescriptionCount
+        badgeCounts.consultationUpdatesCount + mobilePrescriptionBadgeCount
       }, Reminders: ${badgeCounts.remindersCount}, Health alerts: ${badgeCounts.healthAlertsCount}`
     : undefined;
 
@@ -63,6 +71,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       toast.info(text);
       queryClient.invalidateQueries({ queryKey: ['notifications-badge-counts'] });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-message-senders'] });
     };
 
     socket.on('notification:new', handler);

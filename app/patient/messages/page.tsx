@@ -64,7 +64,15 @@ export default function MessagesPage() {
       return res.data;
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    queryClient.invalidateQueries({ queryKey: ['notifications-badge-counts'] });
+    queryClient.invalidateQueries({ queryKey: ['unread-message-senders'] });
+  }, [user?.id, queryClient]);
 
   const [unreadSenderIdsSet, setUnreadSenderIdsSet] = useState<Set<string>>(
     new Set(),
@@ -403,7 +411,7 @@ export default function MessagesPage() {
                         <p className="text-xs text-gray-500 truncate">{subtext}</p>
                       </div>
                       {unreadSenderIdsSet.has(contactUserId) && (
-                        <span className="ml-auto inline-flex items-center justify-center min-w-[1rem] h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
+                        <span className="ml-auto inline-flex items-center justify-center min-w-4 h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
                           1
                         </span>
                       )}

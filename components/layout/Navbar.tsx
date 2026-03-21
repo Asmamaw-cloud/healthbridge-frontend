@@ -4,7 +4,7 @@ import { Bell, LogOut, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { socketService } from '@/lib/socket';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Notification } from '@/types';
 import {
@@ -28,6 +28,7 @@ export default function Navbar({
 }) {
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 
   const notificationsQuery = useQuery<Notification[]>({
@@ -81,7 +82,13 @@ export default function Navbar({
     // Group non-message notifications by (type + senderId).
     const nonMessageGroups = new Map<
       string,
-      { type: string; senderId: string | null; unreadCount: number; createdAt: Date }
+      {
+        type: string;
+        senderId: string | null;
+        unreadCount: number;
+        createdAt: Date;
+        unreadIds: string[];
+      }
     >();
 
     for (const n of notifications) {
@@ -99,11 +106,13 @@ export default function Navbar({
           senderId,
           unreadCount: n.isRead ? 0 : 1,
           createdAt,
+          unreadIds: n.isRead ? [] : [n.id],
         });
         continue;
       }
 
       existing.unreadCount += n.isRead ? 0 : 1;
+      if (!n.isRead) existing.unreadIds.push(n.id);
       if (createdAt > existing.createdAt) existing.createdAt = createdAt;
     }
 
@@ -113,6 +122,7 @@ export default function Navbar({
       senderId: g.senderId,
       unreadCount: g.unreadCount,
       createdAt: g.createdAt,
+      unreadIds: g.unreadIds,
     }));
 
     return [...nonMessageItems, ...messageItems]
@@ -177,8 +187,27 @@ export default function Navbar({
                           <DropdownMenuItem
                             key={`msg-${item.senderId}`}
                             className="px-4 py-3 hover:bg-gray-100 cursor-pointer w-full bg-gray-200"
-                            onClick={() => {
+                            onClick={async () => {
                               setOpen(false);
+                              try {
+                                await api.put(
+                                  `/notifications/mark-messages-read?senderId=${item.senderId}`,
+                                );
+                              } catch {
+                                // best-effort
+                              }
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications-badge-counts'],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications'],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications-list'],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ['unread-message-senders'],
+                              });
                               router.push(
                                 `/${userRole}/messages?with=${item.senderId}`,
                               );
@@ -215,8 +244,26 @@ export default function Navbar({
                             className={`px-4 py-3 hover:bg-gray-100 cursor-pointer w-full ${
                               item.unreadCount > 0 ? 'bg-gray-200' : ''
                             }`}
-                            onClick={() => {
+                            onClick={async () => {
                               setOpen(false);
+                              try {
+                                await Promise.all(
+                                  item.unreadIds.map((id) =>
+                                    api.put(`/notifications/${id}/read`),
+                                  ),
+                                );
+                              } catch {
+                                // best-effort
+                              }
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications-badge-counts'],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications'],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ['notifications-list'],
+                              });
                               router.push(target);
                             }}
                           >

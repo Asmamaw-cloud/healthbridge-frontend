@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { Notification } from '@/types';
@@ -21,6 +21,20 @@ export default function ProviderNotifications() {
       return res.data;
     },
   });
+
+  useEffect(() => {
+    api
+      .put('/notifications/mark-non-message-read')
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({
+          queryKey: ['notifications-badge-counts'],
+        });
+      })
+      .catch(() => {
+        // best-effort
+      });
+  }, [queryClient]);
 
   const grouped = useMemo(() => {
     type Group = {
