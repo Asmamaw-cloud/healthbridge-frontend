@@ -8,6 +8,8 @@ export interface User {
   email?: string | null;
   phoneNumber?: string | null;
   role: UserRole;
+  /** Present when returned from API; suspended users cannot log in */
+  isSuspended?: boolean;
   createdAt: string;
   updatedAt: string;
 }

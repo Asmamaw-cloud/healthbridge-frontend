@@ -37,8 +37,17 @@ export default function LoginPage() {
       
       login(user, token);
       router.push(`/${user.role}/dashboard`);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: unknown } } })
+        ?.response?.data;
+      const msg = data?.message;
+      const text =
+        typeof msg === 'string'
+          ? msg
+          : Array.isArray(msg)
+            ? msg.join(', ')
+            : 'Login failed';
+      setError(text);
     } finally {
       setLoading(false);
     }
