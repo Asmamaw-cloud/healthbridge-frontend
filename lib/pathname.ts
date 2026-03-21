@@ -14,7 +14,3 @@ export function isMessagesPath(pathname: string) {
 export function isNotificationsPath(pathname: string) {
   return normalizePathname(pathname).endsWith('/notifications');
 }
-
-export function isPrescriptionsPath(pathname: string) {
-  return normalizePathname(pathname).endsWith('/prescriptions');
-}

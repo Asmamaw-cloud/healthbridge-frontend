@@ -122,12 +122,17 @@ export default function PatientConsultations() {
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                           Scheduled
                         </span>
-                        <Link
-                          href={`/video/${consultation.id}`}
-                          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                        >
-                          <Video className="w-4 h-4 mr-2" /> Join Video Call
-                        </Link>
+                        {consultation.patientVideoJoinAllowed &&
+                          (consultation.consultationType === 'video' ||
+                            consultation.consultationType === 'audio' ||
+                            consultation.consultationType == null) && (
+                            <Link
+                              href={`/video/${consultation.id}`}
+                              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                            >
+                              <Video className="w-4 h-4 mr-2" /> Join Video Call
+                            </Link>
+                          )}
                       </>
                     )}
 

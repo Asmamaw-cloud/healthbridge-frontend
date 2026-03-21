@@ -1,6 +1,7 @@
 export type UserRole = 'patient' | 'provider' | 'pharmacy' | 'admin';
 export type VerificationStatus = 'pending' | 'approved' | 'rejected';
 export type ConsultationStatus = 'pending' | 'scheduled' | 'completed' | 'cancelled' | 'rejected' | 'expired';
+export type ConsultationType = 'video' | 'audio' | 'chat';
 
 export interface User {
   id: string;
@@ -60,7 +61,10 @@ export interface Consultation {
   consultationDate: string;
   consultationTime: string;
   consultationStatus: ConsultationStatus;
+  consultationType?: ConsultationType;
   meetingLink?: string | null;
+  /** Patient may join Agora only after acknowledging the provider's video invite. */
+  patientVideoJoinAllowed?: boolean;
   consultationNotes?: string | null;
   createdAt: string;
   updatedAt: string;

@@ -5,11 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import {
-  isMessagesPath,
-  isNotificationsPath,
-  isPrescriptionsPath,
-} from '@/lib/pathname';
+import { isMessagesPath, isNotificationsPath } from '@/lib/pathname';
 import { 
   Home, 
   Users, 
@@ -85,13 +81,13 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const messageBadge = badgeCounts?.messageCount ?? 0;
   const isMessagesRoute = isMessagesPath(pathname);
   const isNotificationsRoute = isNotificationsPath(pathname);
-  const isPrescriptionsRoute = isPrescriptionsPath(pathname);
 
-  const consultationUpdatesBadge = badgeCounts?.consultationUpdatesCount ?? 0;
+  // Prescription notifications are included with consultation updates (no separate sidebar badge).
+  const consultationUpdatesBadge =
+    (badgeCounts?.consultationUpdatesCount ?? 0) +
+    (user.role === 'patient' ? (badgeCounts?.prescriptionCount ?? 0) : 0);
   const remindersBadge = badgeCounts?.remindersCount ?? 0;
   const healthAlertsBadge = badgeCounts?.healthAlertsCount ?? 0;
-
-  const prescriptionsBadge = badgeCounts?.prescriptionCount ?? 0;
 
   return (
     <div className="flex flex-col w-64 bg-gray-900 border-r border-gray-800 h-full">
@@ -135,7 +131,11 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                     <div className="ml-auto flex shrink-0 items-center gap-1">
                       {consultationUpdatesBadge > 0 && (
                         <span
-                          title="Consultation updates"
+                          title={
+                            user.role === 'patient'
+                              ? 'Consultation updates & prescriptions'
+                              : 'Consultation updates'
+                          }
                           className="inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-semibold"
                         >
                           {consultationUpdatesBadge}
@@ -159,13 +159,6 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                       )}
                     </div>
                   )}
-                {item.href.endsWith('/prescriptions') &&
-                    prescriptionsBadge > 0 &&
-                    !isPrescriptionsRoute && (
-                      <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-2 rounded-full bg-blue-600 text-white text-xs font-semibold">
-                        {prescriptionsBadge}
-                      </span>
-                    )}
               </Link>
             );
           })}

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { socketService } from '@/lib/socket';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { parseConsultationIdFromNotificationMessage } from '@/lib/notification-helpers';
+import { patientNonMessageNotificationPath } from '@/lib/patient-notification-routes';
 import { Notification } from '@/types';
 import {
   DropdownMenu,
@@ -88,6 +90,7 @@ export default function Navbar({
         unreadCount: number;
         createdAt: Date;
         unreadIds: string[];
+        sampleMessage: string;
       }
     >();
 
@@ -107,6 +110,7 @@ export default function Navbar({
           unreadCount: n.isRead ? 0 : 1,
           createdAt,
           unreadIds: n.isRead ? [] : [n.id],
+          sampleMessage: n.message,
         });
         continue;
       }
@@ -123,6 +127,7 @@ export default function Navbar({
       unreadCount: g.unreadCount,
       createdAt: g.createdAt,
       unreadIds: g.unreadIds,
+      sampleMessage: g.sampleMessage,
     }));
 
     return [...nonMessageItems, ...messageItems]
@@ -232,11 +237,13 @@ export default function Navbar({
 
                       if (item.kind === 'nonMessageGroup') {
                         const target =
-                          item.type === 'abnormal_reading'
-                            ? '/patient/health-tracker'
-                            : item.type === 'prescription_added'
-                              ? `/${userRole}/prescriptions`
-                              : `/${userRole}/consultations`;
+                          userRole === 'patient'
+                            ? patientNonMessageNotificationPath(item.type)
+                            : item.type === 'abnormal_reading'
+                              ? '/patient/health-tracker'
+                              : item.type === 'prescription_added'
+                                ? `/${userRole}/prescriptions`
+                                : `/${userRole}/consultations`;
 
                         return (
                           <DropdownMenuItem
@@ -246,6 +253,27 @@ export default function Navbar({
                             }`}
                             onClick={async () => {
                               setOpen(false);
+                              if (
+                                userRole === 'patient' &&
+                                item.type === 'consultation_video_invite'
+                              ) {
+                                const cid =
+                                  parseConsultationIdFromNotificationMessage(
+                                    item.sampleMessage,
+                                  );
+                                if (cid) {
+                                  try {
+                                    await api.put(
+                                      `/consultations/${cid}/patient-ack-video-invite`,
+                                    );
+                                  } catch {
+                                    // best-effort
+                                  }
+                                  queryClient.invalidateQueries({
+                                    queryKey: ['patient-consultations'],
+                                  });
+                                }
+                              }
                               try {
                                 await Promise.all(
                                   item.unreadIds.map((id) =>

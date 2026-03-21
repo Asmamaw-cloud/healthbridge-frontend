@@ -111,13 +111,13 @@ export default function ProviderNotifications() {
             {grouped.map((g) => (
               <li
                 key={g.key}
-                className={`p-5 ${
+                className={`p-2 ${
                   g.unreadCount > 0 ? 'bg-blue-50/50' : 'bg-white'
                 }`}
               >
                 <button
                   type="button"
-                  className="w-full flex items-start justify-between gap-4 text-left"
+                  className="w-full flex items-start justify-between gap-4 text-left cursor-pointer hover:bg-gray-50 p-2"
                   onClick={async () => {
                     // Mark the whole group as read, then redirect.
                     await Promise.all(

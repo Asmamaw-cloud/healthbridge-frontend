@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Pill, Calendar, User, Download, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function PatientPrescriptions() {
-  const queryClient = useQueryClient();
-
   const { data: prescriptions = [], isLoading } = useQuery<any[]>({
     queryKey: ['patient-prescriptions'],
     queryFn: async () => {
@@ -16,20 +13,6 @@ export default function PatientPrescriptions() {
       return res.data;
     }
   });
-
-  useEffect(() => {
-    // Clear "prescription_added" badge when patient opens prescriptions.
-    api
-      .put('/notifications/mark-prescription-added-read')
-      .then(() => {
-        queryClient.invalidateQueries({
-          queryKey: ['notifications-badge-counts'],
-        });
-      })
-      .catch(() => {
-        // best-effort
-      });
-  }, [queryClient]);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">

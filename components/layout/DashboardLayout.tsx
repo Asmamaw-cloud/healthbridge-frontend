@@ -10,7 +10,7 @@ import { socketService } from '@/lib/socket';
 import { useAuthStore } from '@/store/useAuthStore';
 import { api } from '@/lib/api';
 import { usePathname } from 'next/navigation';
-import { isMessagesPath, isPrescriptionsPath } from '@/lib/pathname';
+import { isMessagesPath } from '@/lib/pathname';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
@@ -37,26 +37,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   });
 
   const isMessagesRoute = isMessagesPath(pathname);
-  const isPrescriptionsRoute = isPrescriptionsPath(pathname);
   const mobileMessageBadgeCount = isMessagesRoute
     ? 0
     : badgeCounts?.messageCount ?? 0;
 
-  const mobilePrescriptionBadgeCount = isPrescriptionsRoute
-    ? 0
-    : badgeCounts?.prescriptionCount ?? 0;
+  const consultationUpdatesInclPrescriptions =
+    (badgeCounts?.consultationUpdatesCount ?? 0) +
+    (badgeCounts?.prescriptionCount ?? 0);
 
   const mobileBellBadgeTotal =
     mobileMessageBadgeCount +
-    (badgeCounts?.consultationUpdatesCount ?? 0) +
-    mobilePrescriptionBadgeCount +
+    consultationUpdatesInclPrescriptions +
     (badgeCounts?.remindersCount ?? 0) +
     (badgeCounts?.healthAlertsCount ?? 0);
 
   const mobileBellTitle = badgeCounts
-    ? `Messages: ${mobileMessageBadgeCount}, Consultation updates: ${
-        badgeCounts.consultationUpdatesCount + mobilePrescriptionBadgeCount
-      }, Reminders: ${badgeCounts.remindersCount}, Health alerts: ${badgeCounts.healthAlertsCount}`
+    ? `Messages: ${mobileMessageBadgeCount}, Consultation updates: ${consultationUpdatesInclPrescriptions}, Reminders: ${badgeCounts.remindersCount}, Health alerts: ${badgeCounts.healthAlertsCount}`
     : undefined;
 
   useEffect(() => {

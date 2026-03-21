@@ -57,8 +57,18 @@ export default function VideoCallRoom() {
         }
 
         if (!channelName) {
-           setError('Waiting for provider to start the meeting...');
-           return;
+          if (user?.role === 'patient') {
+            const providerStarted = Boolean(res.data.providerVideoStarted);
+            const allowed = Boolean(res.data.patientVideoJoinAllowed);
+            if (providerStarted && !allowed) {
+              setError(
+                'Your provider has started the call. Open the video call invitation from Notifications (bell), then return here or refresh to join.',
+              );
+              return;
+            }
+          }
+          setError('Waiting for provider to start the meeting...');
+          return;
         }
 
         const finalAppId = config.appId || process.env.NEXT_PUBLIC_AGORA_APP_ID;
@@ -246,49 +256,54 @@ export default function VideoCallRoom() {
         </div>
       </div>
 
-      {/* Video Grid */}
-      <div className="flex-1 p-4 mt-16 pb-24 grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Local Video */}
-        <div className="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
-          <div ref={localVideoRef} className="absolute inset-0 w-full h-full object-cover"></div>
-          {!videoOn && (
-             <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
-                <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold">
-                   {user?.fullName?.charAt(0)}
-                </div>
-             </div>
-          )}
-          <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-sm z-20">
-            You {micOn ? '' : '(Muted)'}
-          </div>
-        </div>
-
-        {/* Remote Videos */}
+      {/* Main remote + picture-in-picture local (single primary "screen" + self view) */}
+      <div className="flex-1 mt-16 pb-24 relative min-h-0">
         {remoteUsers.length === 0 ? (
-          <div className="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
-             <div className="text-center">
-               <div className="w-16 h-16 rounded-full bg-gray-700 mx-auto flex items-center justify-center mb-4">
-                  <div className="w-3 h-3 bg-gray-500 rounded-full animate-ping"></div>
-               </div>
-               <p className="text-gray-400">Waiting for other to join...</p>
-             </div>
+          <div className="absolute inset-4 rounded-xl overflow-hidden bg-gray-800 border border-gray-700 flex items-center justify-center">
+            <div className="text-center px-4">
+              <div className="w-16 h-16 rounded-full bg-gray-700 mx-auto flex items-center justify-center mb-4">
+                <div className="w-3 h-3 bg-gray-500 rounded-full animate-ping" />
+              </div>
+              <p className="text-gray-400">Waiting for other to join...</p>
+            </div>
           </div>
         ) : (
-          remoteUsers.map(r => (
-            <div key={r.uid} id={`remote-video-${r.uid}`} className="relative bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
+          remoteUsers.map((r) => (
+            <div
+              key={r.uid}
+              id={`remote-video-${r.uid}`}
+              className="absolute inset-4 rounded-xl overflow-hidden bg-gray-800 border border-gray-700"
+            >
               {!r.hasVideo && (
-                 <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
-                    <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold">
-                       {participantName.charAt(0)}
-                    </div>
-                 </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
+                  <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold">
+                    {participantName.charAt(0)}
+                  </div>
+                </div>
               )}
-              <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 px-3 py-1 rounded text-sm z-20">
+              <div className="absolute bottom-4 left-4 bg-black/50 px-3 py-1 rounded text-sm z-20">
                 {participantName}
               </div>
             </div>
           ))
         )}
+
+        <div className="absolute bottom-28 right-6 z-30 w-[28%] max-w-[200px] min-w-[120px] aspect-video rounded-lg overflow-hidden border-2 border-gray-600 shadow-xl bg-gray-800">
+          <div
+            ref={localVideoRef}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {!videoOn && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 z-10">
+              <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-lg font-bold">
+                {user?.fullName?.charAt(0)}
+              </div>
+            </div>
+          )}
+          <div className="absolute bottom-1 left-1 bg-black/50 px-2 py-0.5 rounded text-xs z-20">
+            You{micOn ? '' : ' (Muted)'}
+          </div>
+        </div>
       </div>
 
       {/* Controls Footer */}

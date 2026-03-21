@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
@@ -28,8 +28,6 @@ type FormValues = z.infer<typeof formSchema>;
 export default function ProviderPrescriptions() {
   const [selectedConsultationId, setSelectedConsultationId] = useState<string | null>(null);
 
-  const queryClient = useQueryClient();
-
   const { data: consultations = [], isLoading } = useQuery<Consultation[]>({
     queryKey: ['provider-completed-consultations'],
     queryFn: async () => {
@@ -38,20 +36,6 @@ export default function ProviderPrescriptions() {
       return res.data.filter((c: Consultation) => c.consultationStatus === 'scheduled' || c.consultationStatus === 'completed');
     }
   });
-
-  useEffect(() => {
-    // Best-effort: keep badge state consistent if providers ever receive prescription_added notifications.
-    api
-      .put('/notifications/mark-prescription-added-read')
-      .then(() => {
-        queryClient.invalidateQueries({
-          queryKey: ['notifications-badge-counts'],
-        });
-      })
-      .catch(() => {
-        // best-effort
-      });
-  }, [queryClient]);
 
   console.log("Here are the consultations", consultations)
 
