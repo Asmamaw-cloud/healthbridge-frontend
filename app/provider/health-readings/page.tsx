@@ -84,25 +84,25 @@ export default function PatientHealthReadings() {
                       <p className={`font-semibold ${reading.bloodPressure.includes('/') && parseInt(reading.bloodPressure.split('/')[0]) > 160 ? 'text-red-600' : 'text-gray-900'}`}>{reading.bloodPressure}</p>
                     </div>
                   )}
-                  {reading.heartRate !== null && (
+                  {reading.heartRate != null && (
                     <div className="bg-gray-50 p-3 rounded border border-gray-100">
                       <p className="text-xs text-gray-500 mb-1 flex items-center"><Heart className="w-3 h-3 mr-1" /> Heart Rate</p>
                       <p className={`font-semibold ${reading.heartRate > 120 ? 'text-red-600' : 'text-gray-900'}`}>{reading.heartRate} <span className="text-xs font-normal">bpm</span></p>
                     </div>
                   )}
-                  {reading.temperature !== null && (
+                  {reading.temperature != null && (
                     <div className="bg-gray-50 p-3 rounded border border-gray-100">
                       <p className="text-xs text-gray-500 mb-1 flex items-center"><Thermometer className="w-3 h-3 mr-1" /> Temp</p>
                       <p className={`font-semibold ${reading.temperature > 38 ? 'text-red-600' : 'text-gray-900'}`}>{reading.temperature} <span className="text-xs font-normal">°C</span></p>
                     </div>
                   )}
-                  {reading.bloodGlucose !== null && (
+                  {reading.bloodGlucose != null && (
                     <div className="bg-gray-50 p-3 rounded border border-gray-100">
                       <p className="text-xs text-gray-500 mb-1 flex items-center"><Droplets className="w-3 h-3 mr-1" /> Glucose</p>
                       <p className="font-semibold text-gray-900">{reading.bloodGlucose} <span className="text-xs font-normal">mg/dL</span></p>
                     </div>
                   )}
-                  {reading.weight !== null && (
+                  {reading.weight != null && (
                     <div className="bg-gray-50 p-3 rounded border border-gray-100">
                       <p className="text-xs text-gray-500 mb-1 flex items-center"><Scale className="w-3 h-3 mr-1" /> Weight</p>
                       <p className="font-semibold text-gray-900">{reading.weight} <span className="text-xs font-normal">kg</span></p>
